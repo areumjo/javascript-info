@@ -684,3 +684,376 @@ function makeUser(name, age) {
     sumAll(1,2) // 3
     sumAll(1,2,3,4) // 10
     ```
+- `arguments` variable : contains all arguments by their index
+    - before `...` rest parameters did not exist
+    - downside : although both array-like and iterable, it's not array >>> can't use array methods (map) // always contains all arguments // fat arrow fn do not have "arguments" (don't have `this` either)
+- spread : `...arr`, expands an iterable object `arr` into the list of arguments
+    - can use to merge arrays
+    - can turn the string into array of character
+    ```js
+    Math.max(3,5,1); //5
+    let arr = [3,5,1];
+    Math.max(arr); // NaN!
+    Math.max(...arr); // 5 << spread turns array into a list 
+    let arr2 = [9,8,7];
+    let merged = [...arr, ...arr2];
+    let str = "Hello";
+    console.log([...str]); // H,e,l,l,o
+    console.log(Array.from(str)); // H,e,l,l,o << more universal
+    ```
+- Get a new `copy` of array/object
+    - this way, the original arr/obj doesn't get modified
+    - `Object.assign()` can also copy
+    ```js
+    let arr = [1,2,3];
+    let arrCopy = [...arr];
+    let obj = { a: 1, b: 2, c: 3 };
+    let objCopy = {...obj};
+    ```
+
+## Variable scope
+- JS : function-oriented language
+    - functions are `object`
+    - `name` : function name
+    - `length` for function : returns the nubmer of function parameters
+- `closure` : a function that remembers its outer variables and can access them
+    - in JS all functions are naturally closures : automatically remember where they were created using `[[Environment]]` property >> how Lexical env work
+- `var` : have no block scope >> visible minimum at the function level
+
+## IIFE
+- Immediately-invoked ufnction expressions
+- `(function {...})()` or `(function {...}())`
+
+## "new Function"
+- `new Function([arg1, arg2, ...argN], functionBody)`
+    - arguments are string
+
+## Scheduling
+- `setTimeout`
+- `setInterval`
+    - allow to run the func once/regularly after delay ms
+    ```js
+    setTimeout(()) => console.log("Hello from 1s"), 1000);
+    ```
+- Zero delay with setTimeout(func, 0 ) || setTimeout(func) : not zero >> call ASAP but after the current script is complete
+
+# 7. Prototypes, inheritance
+## Prototypal inheritance
+- Objects have a special hidden property [[Prototype]], that is either null or references another object ("prototype")
+- Prototypal inheritance : when we want to read a property from object, and it's missing >> JS takes if from "prototype"
+    - reference can't go in circles
+    - value of `__proto__` : can be only either null or an object (historical getter/setter)
+    - only one [[Prototype]] exist
+    ```js
+    let animal = { eats: true };
+    let rabbit = { jumps: true }; // set animal => prototype
+    rabbit.__proto__ = animal;
+    rabbit.eats; // true; => JS go to prototype reference
+    rabbit.jumps; // true;
+    ```
+- If `Obj.method()`, the method is taken from the protytpe >> `this` references `obj`
+- `for..in` loop iterates over both object and protytpe
+- other key-value methods (`Object.keys()`) only operate onthe object itself (not prototype)
+
+
+## F.prototype
+- `new F()` : create new object with constructor function
+    - if `F.prototype` is an object, then `new` uses it to set [[Prototype]] for the new object
+    ```js
+    let animal = { eats: true };
+    function Rabbit(name) {
+        this.name= name;
+    }
+    Rabbit.prototype = animal;
+    let rabbit = new Rabbit("Bunny");
+    rabbit.eats; //true
+- Every function has "prototype" with property `constructor` that points back to the function itself
+    - `F.prototpye = { constructor: F }`
+    ```js
+    function Rabbit() {}
+    // Rabbit.prototype = { constructor: Rabbit } << by default
+    Rabbit.prototype.constructor == Rabbit; // true
+    function User(name) {
+        this.name= name;
+    }
+    let user = new User("John");
+    let user2 = new user.constructor("Jain")
+    user2.name; // Jain
+    ```
+- Modern way to create prototype
+    - `Object.create(proto)`
+    - `Object.getPrototypeOf(obj)`
+    - `Object.setPrototypeOf(obj, proto)`
+
+# 8. Classes
+## `class`
+- In modern JS, more advanced "class" construct >> useful for Object-oriented programming
+    ```js
+    class User {
+        constructor(name) {
+            this.name = name;
+        } // << automatically called by new
+        sayHi() {
+            console.log(`Hi, ${this.name}`);
+        } // << User.prototype
+        get name() {
+            return this._name;
+        }
+        set name(value) {
+            if (value.lenght < 4) {
+                console.log("Name is too short");
+                return
+            }
+            this._name = value;
+        }
+    }
+    let user1 = new User("Ari");
+    user1.sayHi(); // Ari
+    ```
+    - class : `function`
+    - class must be called with `new`
+
+## class inheritance
+- `extend`
+    - parent methods >> inheritance >> child
+    - `class Child extends Parent {}` == `Child.prototype.__proto__ = Parent.prototype
+- Overrding a method
+    - build method on top of parent methods
+    - `super.method(...)` : call a parent method inside of child method
+    - `super(...)` : call a parent constructor
+    ```js
+    class Rabbit extends Animal {
+        hide() {
+            console.log(`${this.name} hides!`)
+        }
+        stop() {
+            super.stope(); // call parent stop
+            this.hide();
+        }
+    }
+    ```
+- Overriding constructor
+    - when child class doesn't have constructor : empty constructor passing all parent arguments
+    - derived constructor (child) must call `super` in order to execute its parent constructure, otherwise `this` won't be created (error!)
+    ```js
+    class Animal {
+        constructor(name) {
+            this.name = name;
+        }
+    }
+    class Rabbit extends Animal {
+        constructor(name, earLength) {
+            super(name);
+            this.earLength = earLength;
+        }
+    }
+    ```
+
+## Static properties and methods
+- `static` : assign a method to the class function itself "as a whole", not its *prototype*
+    - static methods are used to implement functions that belong to the class, not to any particular object of it
+    - "factory" method : create an empty class
+    - used in database-related classes to search/save/remove entries from the db
+
+## Private, protected properties and methods
+- Private object field (prop, methods) : accessible only from inside the class // internal inteface
+    - Protected properties : prefixed with underscore `_`
+    - read-only "power" : must be set at creation time only, nver modified
+    ```js
+    class CoffeMachine {
+        _waterAmount = 0; // protected
+        set waterAmount(value) {
+            if (value < 0) throw new Error("Negative water");
+            this._waterAmount = value;
+        }
+        get waterAmount() {
+            return this._waterAmount;
+        }
+        constructor(power) {
+            this._power = power; // machine power never change
+        }
+        get power() {
+            return this._power; // no setter, only getter
+        }
+    }
+    ```
+    - getter / setter : get.../set... functions are preferred : more flexible : accept multiple arguments
+
+## instanceof : class checking
+- `instanceof` : allows to check whether an object belongs to a certain class
+    - `obj instanceof Class`
+    - return true||false
+
+## Mixin
+- A class that contains methods for other classes
+
+
+# 9. Error handling
+## "try..catch"
+- `try..catch` : it catches error so the program can do more stuffs instead of 'dying' 
+    1. try {...} : if there is no errors, catch(err) is ignored
+    2. catch(err) : if error, then try is stopped and catch(err) // `err` variable contain an error object (err properties : name/message/stack)
+    - only works for runtime errors : valid JS // if error is syntactically wrong, it doesn't work (unmatched braces)
+    ```js
+    let json = '{"name":"John", "age": 30}'; 
+    let user = JSON.parse(json);
+    let badjson = "{ bad json }";
+    try {
+        let user = JSON.parse(json);
+        console.log(user.name);
+        if (!user.name) {
+            throw new SyntaxError("Imcomplete data: no name");
+        }
+    } catch(err) {
+        console.log(err);
+    }
+    ```
+- `throw <error object>` : generates an error
+- `try..catch..finally` : finally will be executed after try/catch
+
+
+# 10. Promises, async/await
+## Callbacks
+- *asynchronous* action : actions that initiates now! but finish later 
+    - `setTimeout()` // loading scripts/modules
+    ```js
+    function loadScript(src, callback) {
+        let script = document.createElement('script');
+        script.src = src;
+        script.onload = () => callback(script);
+        document.head.append(script);
+    }
+    // if this function doesn't have callback, this (loadScript) will run but can't call other new functions using the script
+    loadScript('/my/index.js', function(any)) {
+        newFunction(any);
+    };
+    ```
+- Handling error
+    -eoor-first callback style
+    ```js
+    loadScript('/index.js', function(error, script) {
+        if (error) { /* handle error */}
+        else { /* script load */ }
+    })
+    ```
+
+## Promise
+- `new Promise` : take 2 callbacks // internal prop - state, result
+    1. resolve (value) : state-fulfilled, result-value
+    2. reject (error) : state-rejected, result-error
+    ```js
+    function loadScript(src) {
+        return new Promise((res, rej) => {
+            let script = document.createElement('script');
+            script.src = src;
+            script.onload = () => res(script);
+            script.onerror = () => rej(new Error('error!'));
+        })
+    }
+    ```
+- `fetch(url)` : load the information about the user from the remote server
+    - network `request` to the url and return promise
+    - promise resolves with a `response` object
+    - response object from fetch has `response.json()` methods >> read the remote data (from server) and parses it as JSON
+    ```js
+    fetch('/user.json')
+        .then(response => response.json())
+        .then(user => fetch(`githubAPI/${user})`)
+        .then(response => response.json())
+        .then(githubUser => {
+            let img = document.createElement('img');
+            img.src = githubUser.avatar_url;
+            img.className = "promise-avatar-example";
+            document.body.append(img);
+
+            setTimeout(() => img.remove(), 3000);
+        })
+        .catch(error => alret(error.message))
+    ```
+
+## Promise APi
+- `Promise.all` : many promises to execute in parallel and wait until all of them are ready
+    - if any of the promises is rejected, Promise.all immediately rejects with error
+    ```js
+    let names = ['ari', 'bey', 'gray'];
+    let requests = names.map(name => fetch(`github/${name}`))
+    Promise.all(requests)
+        .then(responses => for(let response of responses) {
+      alert(`${response.url}: ${response.status}`); // shows 200 for every url
+    })
+    ```
+- `Promise.resolve(value)`
+- `Promise.reject(error)`
+
+## Async/await
+- `async` before a function : the function always returns a promise
+- `await` : works only insde async function
+    - make JS wait until that promise settles and returns its result
+
+
+# 11. Module
+## Build tools
+- Buile JS modules together with webpack and deploy to the production server
+    - benefit : more control over how modules are resolved >> allow to use HTML/CSS moduels
+- Modules always `use strict`
+- Module code is executed only once : exports are created once and shared between importer
+
+
+# Regular Expression
+## Patterns and flags
+- Regexp : patterns that provide a powerful way to search and replace in text
+    1. pattern
+    2. (optional) flags
+- 2 syntax
+    1. `regexp = new RegExp("pattern", "flags")`
+    2. `regexp = /pattern/gmi` : pattern with 3 (g,m,i) flags
+    - /.../ : tell JS that we are creating regexp
+- 6 flgas : 2 are important (i, g)
+    1. i : case-insensitive (A==a)
+    2. g : search all matches (without it, only return 1st match)
+    3. m : multiline mode
+- `str.match(regexp)` : finds all matches of regexp // if no matches, return `null`
+- `str.replcae(regexp, replacement)` : replace regexp with replacement
+- `regexp.test(str)` : return true/false (at least one match) 
+
+## Character classes
+- A special notation that matches any symbol from a certain set
+- `\d` : any single digit class // 0-9
+- `\s` : spaces, tabs, newlines // ' '
+- `\w` : either an alphabet or digit or underscore // a-z 0-9
+- Inverse classes
+    - `\D` : non-digit (any character except \d)
+    - `\S` : non-space (excep \d)
+    - `\W` : non-alphanumenic (excep \w)
+```js
+let str = "+7(903)-123-45-67";
+str.match(/\d/g).join(''); // 79031234567
+str.replace(/\D/g, ""); // 79031234567
+```
+- `.` : any character (including space and special character)
+- `^` : (caret) matches at the beginning of the text
+- `$` : matches at the end of the test
+- `^...$` : test whether or not a string fully matches the pattern
+    - have zero width : they do not match a character, but force the regexp to check the condition
+
+## Sets and ranges [...]
+- Sets : anything inside of [] >> /[abc]/ find 'a' or 'b' or 'c'
+- Ranges : character ranges
+    - [a-z] : range from a to z
+    - [0-9A-Z] : 2 ranges : either a digit from 0 to 9 or a letter from A to Z
+    - \d === [0-9], \w === [a-zA-Z0-9_], \s === [\t\n\v\f\r ]
+- Excluding range : `[^...]`
+    - \D === [^0-9], \S === [^\s]
+    - [.] (dot) inside squar bracker : just a dot
+
+## Quantity {n}
+- Quantitifier is appended to a character (class or []) and specifies how many you need
+    - `\d{5}` === \d\d\d\d\d : denotes 5 digits
+    - can use excluding class \b\d{5}\b : 12345 not 123456
+- Range : `\d{3, 5}` : match 3-5 times
+    - cna omit the upper limit `\d{3,}` : digits (length >= digit)
+- Shorthands 
+    - `+` : one or more same as `{1,}`
+        - `\d+` : loos for numbers (with any degit)
+    - `?` : zero or one same as `{0,1}` >> symbol optional
+    - `*` : zero or more same as `{0,}` >> may repeat any times or abset

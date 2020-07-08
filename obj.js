@@ -180,7 +180,7 @@ function printList(list) {
   }
   return result;
 }
-console.log(printList(list))
+// console.log(printList(list))
 
 function printListRec(list) {
   // console.log(list.value);
@@ -203,3 +203,195 @@ function reversePrint(list) {
   return result;
 }
 // console.log(reversePrint(list))
+
+
+function sum(a) {
+  return function(b) {
+    return a+b;
+  }
+}
+// console.log(sum(1)(2)); // 3
+// console.log(sum(-1)(5)); // 4
+
+
+function inBetween(a, b) {
+  return function (x) {
+    if (x >=a && x <=b) {
+      return x;
+    }
+  }
+}
+function inArray(arr) {
+  return function (x) {
+    return arr.includes(x);
+  }
+}
+let arr = [1, 2, 3, 4, 5, 6, 7];
+// console.log(arr.filter(inBetween(3,6)));
+// console.log(arr.filter(inArray([1, 2, 10]))); // [1,2]
+
+
+let users = [
+  { name: "John", age: 20, surname: "Johnson" },
+  { name: "Pete", age: 18, surname: "Peterson" },
+  { name: "Ann", age: 19, surname: "Hathaway" }
+];
+
+function byField(key) {
+  return (a, b) => a[key] > b[key] ? 1 : -1;
+}
+// console.log(users.sort(byField('name')))
+// console.log(users.sort(byField('age')))
+
+
+function makeCounter() {
+
+  let count = 0;
+  function counter() {
+    return count++;
+  }
+  counter.set = value => count = value;
+  counter.decrease = () => count--;
+  return counter;
+};
+let counter = makeCounter();
+
+
+let head = {
+  glasses: 1
+};
+
+let table = {
+  pen: 3
+};
+
+let bed = {
+  sheet: 1,
+  pillow: 2
+};
+
+let pockets = {
+  money: 2000
+};
+table.__proto__ = head;
+bed.__proto__ = table;
+pockets.__proto__ = bed;
+// console.log(pockets.pen); //3
+// console.log(bed.glasses); //1
+
+
+let hamster = {
+  stomach: [],
+  eat(food) {
+    this.stomach.push(food);
+  }
+}
+let speedy = {
+  __proto__: hamster,
+  stomach: []
+}
+let lazy = {
+  __proto__: hamster,
+  stomach: []
+}
+
+speedy.eat("apple");
+speedy.eat("scone");
+// console.log(speedy.stomach, lazy.stomach);
+
+class Clock {
+  constructor(template) {
+    this.template = template;
+  }
+  render() {
+    let date = new Date();
+    let hours = date.getHours();
+    let mins = date.getMinutes();
+    let secs = date.getSeconds();
+    // let output = this.template.replace('h', hours).replace('m', mins).replace('s', secs);
+    let output = ""
+    this.template = output + hours+mins+secs;
+    console.log(this.template)
+    return this.template;
+  }
+  start() {
+    this.render();
+  }
+}
+let clock = new Clock();
+// clock.start();
+
+
+let KthLargest = function(k, nums) {
+  this.k = k;
+  this.arr = nums.sort((a,b) => a-b);
+  this.sorted = this.arr.slice(this.arr.length-this.k,this.arr.length+1);
+}
+KthLargest.prototype.add = function(val) {
+  if (val < this.sorted[0]) {
+    this.sorted = this.sorted;
+  } else {
+    let temp=0;
+    for (let i=this.sorted.length-1; i>-1; i--) {
+      // add value where sorted[i] i+1
+      if (val >= this.sorted[i]) {
+        temp = i;
+        break;
+      }
+    }
+    this.sorted.splice(temp+1,0, val);
+    this.sorted.splice(0,1)
+  }
+  console.log(this.sorted[0], this.sorted)
+  return this.sorted[0];
+}
+let k = 3;
+let arr3 = [4,5,8,2];
+let kthLargest = new KthLargest(3, arr3);
+// kthLargest.add(3);   // returns 4
+// kthLargest.add(5);   // returns 5
+// kthLargest.add(10);  // returns 5
+// kthLargest.add(9);   // returns 8
+// kthLargest.add(4);   // returns 8
+
+
+KthLargest.prototype.addition = function(val) {
+  const findIndex = () => {
+    let l = 0;
+    let h = this.arr.length - 1;
+    while (l < h) {
+      let mid = Math.floor((l+h)/2);
+      if (this.arr[mid] === val) return mid;
+      else if (this.arr[mid] < val) {
+        l = mid+1;
+      } else {
+        h = mid;
+      }
+    }
+    return l;
+  }
+  let index = findIndex();
+  this.arr.splice(index, 0, val);
+  // console.log(this.arr, index, this.arr[this.arr.length - this.k]);
+  return this.arr[this.arr.length - this.k];
+}
+// kthLargest.addition(3);   // returns 4
+// kthLargest.addition(5);   // returns 5
+// kthLargest.addition(10);  // returns 5
+// kthLargest.addition(9);   // returns 8
+// kthLargest.addition(4);   // returns 8
+
+let regStr = "Breakfast at 09:00 in the room 21-30.";
+// hh:mm
+let regexp = /\d\d:\d\d/;
+console.log(regStr.match(regexp)[0]);
+console.log(regexp.test(regStr));
+let reg2 = /\d\d.\d\d/g; // /\d\d[-:]\d\d/
+console.log(regStr.match(reg2));
+
+let reg3 = /\.{3,}/g
+console.log("Hello!... How goes?.....".match(reg3))
+
+let color = "color:#121212; background-color:#AA00ef bad-colors:f#fddee #fd2 #12345678";
+let reg4 = /#\w{6}\b/g
+console.log(color.match(reg4))
